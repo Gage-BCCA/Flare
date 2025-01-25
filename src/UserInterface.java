@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 public class UserInterface {
 
     final private String logo = """
@@ -29,13 +31,18 @@ public class UserInterface {
     }
 
     public void printMainMenu() {
+        System.out.println("4 - Search for Entries By Language");
+        System.out.println("3 - Create an Entry");
         System.out.println("2 - Show Most Recent Entry");
         System.out.println("1 - Show All Entries");
         System.out.println("0 - Exit Program");
+        System.out.print("> ");
     }
 
-    public void printEntries() {
-        System.out.println("All entries");
+    public void printEntries(ArrayList<Entry> entries) {
+        for (Entry entry : entries) {
+            System.out.println(entry.language + " ---- " + entry.notes);
+        }
     }
 
     public void printMostRecentEntry(Entry entry) {
