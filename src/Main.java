@@ -1,4 +1,3 @@
-import java.lang.reflect.Array;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,33 +10,9 @@ public class Main {
 
         UserInterface ui = new UserInterface();
         Scanner input = new Scanner(System.in);
+        DatabaseContext db = new DatabaseContext();
 
-        Entry fakeEntry = new Entry(
-                "C#",
-                "C# is better than Java",
-                new Date(),
-                new Date(2010, 1, 3)
-        );
-
-        Entry fakeEntry1 = new Entry(
-                "C++",
-                "C++ is better than Java",
-                new Date(),
-                new Date(2010, 1, 3)
-        );
-
-        Entry fakeEntry2 = new Entry(
-                "Python",
-                "Python is better than Java",
-                new Date(),
-                new Date(2010, 1, 3)
-        );
-
-        // Fake List of Entries for testing
-        ArrayList<Entry> entries = new ArrayList<>();
-        entries.add(fakeEntry);
-        entries.add(fakeEntry1);
-        entries.add(fakeEntry2);
+        ArrayList<Entry> entries = db.generateDummyData();
 
         ui.printLogo();
 
@@ -50,7 +25,7 @@ public class Main {
                     handlePrintAllEntries(ui, entries);
                     break;
                 case "2":
-                    handlePrintMostRecentEntry(ui, fakeEntry);
+                    handlePrintMostRecentEntry(ui, entries.getFirst());
                     break;
                 case "3":
                     handleCreateEntry(ui);
