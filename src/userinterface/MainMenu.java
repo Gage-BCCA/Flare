@@ -1,7 +1,13 @@
+package userinterface;
+
+import data.models.Entry;
+
 import java.util.ArrayList;
+import java.util.Scanner;
 
-public class UserInterface {
+public class MainMenu {
 
+    private final Scanner input;
     final private String logo = """
                                    _                    \s
               /\\  /\\__ _ _ __   __| |___                \s
@@ -26,14 +32,18 @@ public class UserInterface {
             ====================================================
             """;
 
+    public MainMenu(Scanner input) {
+        this.input = input;
+    }
+
     public void printLogo() {
         System.out.println(logo);
     }
 
     public void printMainMenu() {
         System.out.println("4 - Search for Entries By Language");
-        System.out.println("3 - Create an Entry");
-        System.out.println("2 - Show Most Recent Entry");
+        System.out.println("3 - Create an data.Entry");
+        System.out.println("2 - Show Most Recent data.Entry");
         System.out.println("1 - Show All Entries");
         System.out.println("0 - Exit Program");
         System.out.print("> ");
@@ -41,11 +51,11 @@ public class UserInterface {
 
     public void printEntries(ArrayList<Entry> entries) {
         for (Entry entry : entries) {
-            System.out.println(entry.language + " ---- " + entry.notes);
+            //System.out.println(entry.language + " ---- " + entry.notes);
         }
     }
 
     public void printMostRecentEntry(Entry entry) {
-        System.out.println(entry.language + " ---- " + entry.notes);
+        //System.out.println(entry.language + " ---- " + entry.notes);
     }
 }
