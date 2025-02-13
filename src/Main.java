@@ -4,6 +4,7 @@ import appdriver.InitializerMode;
 import appdriver.InteractiveMode;
 
 // Database Context
+import appdriver.VersionCheckerMode;
 import data.DatabaseContext;
 
 // Data models
@@ -37,9 +38,14 @@ public class Main {
                 // raw arguments, but that doesn't provide
                 // as much resilience as just passing in
                 // an object will null values
-                Project project = cli.getInitArguments(args);
+                Project project = cli.getInitArguments();
                 app = new InitializerMode(project);
                 app.Run();
+                break;
+            case CHECK_VERSION:
+                app = new VersionCheckerMode();
+                app.Run();
+                break;
         }
     }
 }

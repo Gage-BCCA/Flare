@@ -6,7 +6,7 @@ public class AddNoteMode implements AppModeInterface {
         // Check if folder has been initialized
             // break if it has not
         // Take command line arguments and construct Entry object
-        // Determine Project from .lact8 dir
+        // Determine Project from .flare dir
         // Hash and cache all Project Files in Dir
         // Pull all relevant Project Files from database
         // Compare file hashes between the two

@@ -7,17 +7,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+
+
 import data.models.Entry;
 import data.models.Project;
 import data.models.ProjectFile;
 
 import runtime.crypto.Hasher;
+import runtime.xml.XmlWriter;
 
 public class InitializerMode implements AppModeInterface{
-    // Required Args:
-    // Project Name
-    // Language
-    // Description
     private final String initFolderName = "\\.flare";
 
     private final File originDirectory;
@@ -112,15 +111,22 @@ public class InitializerMode implements AppModeInterface{
 
         // Create initial entry for project
         Entry initialEntry = new Entry(
-                "Project Initialized",
+                "Flare Initialized.",
                 0
         );
 
         // Foreign Key reference to Project
         initialEntry.id = project.id;
 
-
         // Store directory information in .flare folder
+        XmlWriter writer = new XmlWriter();
+        try {
+            writer.CreateNew(project, projectFileList, initFolder.toString());
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+
+        System.out.println("Flare Initialized.");
 
     }
 

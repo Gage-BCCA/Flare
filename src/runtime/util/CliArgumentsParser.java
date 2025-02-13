@@ -3,47 +3,56 @@ package runtime.util;
 import runtime.AppModeEnum;
 import data.models.Project;
 
+import java.util.ArrayList;
+
 public class CliArgumentsParser {
 
-    private final String[] arguments;
+    private final ArrayList<String> arguments;
 
     public CliArgumentsParser(String[] args) {
-        this.arguments = args;
+        arguments = new ArrayList<>();
+        for (String arg : args) {
+            arguments.add(arg);
+        }
     }
 
     public AppModeEnum getAppMode() {
 
         // If there are no arguments, we're
         // running the app in interactive mode
-        if (arguments.length == 0) {
+        if (arguments.isEmpty()) {
             return AppModeEnum.INTERACTIVE;
         }
-
-        return switch (arguments[0]) {
-            case "addnote" -> AppModeEnum.QUICK_INSERT;
-            case "init" -> AppModeEnum.INITIALIZE;
-            case "version" -> AppModeEnum.CHECK_VERSION;
-            default -> AppModeEnum.UNKNOWN;
-        };
+        switch (arguments.getFirst()) {
+            case "addnote":
+                return AppModeEnum.QUICK_INSERT;
+            case "init":
+                return AppModeEnum.INITIALIZE;
+            case "version":
+                return AppModeEnum.CHECK_VERSION;
+            default:
+                return AppModeEnum.UNKNOWN;
+        }
     }
 
-    public Project getInitArguments(String[] args) {
+    public Project getInitArguments() {
         Project project = new Project();
-        for (int i = 1; i < args.length; i++) {
-            switch (args[i]) {
+        for (int i = 1; i < arguments.size(); i++) {
+            switch (arguments.get(i)) {
                 case "--project":
-                    project.title = args[i + 1];
-                    break;
+                    project.title = arguments.get(i + 1);
+                    continue;
                 case "--language":
-                    project.language = args[i + 1];
-                    break;
+                    project.language = arguments.get(i + 1);
+                    continue;
                 case "--description":
-                    project.desc = args[i + 1];
-                    break;
+                    project.desc = arguments.get(i + 1);
+                    continue;
                 case "--url":
-                    project.url = args[i + 1];
-                    break;
+                    project.url = arguments.get(i + 1);
+                    continue;
             }
+
         }
         return project;
     }
