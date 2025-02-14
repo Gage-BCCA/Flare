@@ -41,7 +41,7 @@ public class InitializerMode implements AppModeInterface{
         // Construct a project with the provided project from Main
         // This will be filled out later in Run()
         this.projectName = providedProject.title;
-        this.projectDescription = providedProject.desc;
+        this.projectDescription = providedProject.description;
         this.projectLanguage = providedProject.language;
         this.projectUrl = providedProject.url;
         this.projectDir = originDirectory.getName();
@@ -65,7 +65,7 @@ public class InitializerMode implements AppModeInterface{
         // Create Project object
         Project project = new Project();
         project.title = projectName;
-        project.desc = projectDescription;
+        project.description = projectDescription;
         project.language = projectLanguage;
         project.localFileDir = projectDir;
         project.url = projectUrl;
@@ -86,7 +86,7 @@ public class InitializerMode implements AppModeInterface{
             pf.fileName = file.getName();
 
             // To reference the Project with a Foreign Key
-            pf.parentProject = project.id;
+            pf.parentProjectId = project.id;
 
             // Manipulate the file name to get file type
             String extension = "";
@@ -137,12 +137,14 @@ public class InitializerMode implements AppModeInterface{
 
     private void getAllFiles(File directory, ArrayList<File> filesContainer) {
         File[] files = directory.listFiles();
-        for(File file : files) {
-            if (file.isDirectory()) {
-                getAllFiles(file, filesContainer);
-                continue;
+        if (files != null) {
+            for(File file : files) {
+                if (file.isDirectory()) {
+                    getAllFiles(file, filesContainer);
+                    continue;
+                }
+                filesContainer.add(file);
             }
-            filesContainer.add(file);
         }
     }
 }

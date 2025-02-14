@@ -8,6 +8,8 @@ public class Entry {
     public int id;
     public String notes;
     public int duration;
+    public int parentProjectId;
+    public String createdAt;
     public ArrayList<String> modifiedFiles;
 
     public Entry(String notes,

@@ -4,7 +4,8 @@ public class Project {
     public int id;
     public String title;
     public String language;
-    public String desc;
+    public String description;
     public String url;
     public String localFileDir;
+    public String createdAt;
 }

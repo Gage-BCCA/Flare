@@ -46,7 +46,7 @@ public class CliArgumentsParser {
                     project.language = arguments.get(i + 1);
                     continue;
                 case "--description":
-                    project.desc = arguments.get(i + 1);
+                    project.description = arguments.get(i + 1);
                     continue;
                 case "--url":
                     project.url = arguments.get(i + 1);
