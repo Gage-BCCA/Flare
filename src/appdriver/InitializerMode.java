@@ -5,8 +5,11 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
-
+import java.sql.Connection;
+import java.sql.ResultSet;
 
 
 import data.models.Entry;
@@ -28,9 +31,10 @@ public class InitializerMode implements AppModeInterface{
     private final String projectLanguage;
     private final String projectUrl;
     private final String projectDir;
+    private final Connection context;
 
 
-    public InitializerMode(Project providedProject)
+    public InitializerMode(Project providedProject, Connection context)
     {
         // Get the directory that the program is being executed from
         this.originDirectory = new File(System.getProperty("user.dir"));
@@ -45,6 +49,7 @@ public class InitializerMode implements AppModeInterface{
         this.projectLanguage = providedProject.language;
         this.projectUrl = providedProject.url;
         this.projectDir = originDirectory.getName();
+        this.context = context;
     }
 
     public void Run() {
@@ -69,6 +74,31 @@ public class InitializerMode implements AppModeInterface{
         project.language = projectLanguage;
         project.localFileDir = projectDir;
         project.url = projectUrl;
+
+        try {
+            PreparedStatement projectInsertQuery = context.prepareStatement(
+                    "INSERT INTO projects (title, description, language, localFileDir, url) VALUES (?, ?, ?, ?, ?)",
+                    PreparedStatement.RETURN_GENERATED_KEYS
+            );
+            projectInsertQuery.setString(1, projectName);
+            projectInsertQuery.setString(2, projectDescription);
+            projectInsertQuery.setString(3, projectLanguage);
+            projectInsertQuery.setString(4, projectDir);
+            projectInsertQuery.setString(5, projectUrl);
+
+            int rowsAffected = projectInsertQuery.executeUpdate();
+
+            try (ResultSet generatedKeys = projectInsertQuery.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    project.id = generatedKeys.getLong(1);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
 
         // Insert into Database and get Project ID for Entry
         // and project files to be inserted as well
@@ -115,8 +145,32 @@ public class InitializerMode implements AppModeInterface{
                 0
         );
 
-        // Foreign Key reference to Project
-        initialEntry.id = project.id;
+        try {
+            PreparedStatement entryInsertQuery = context.prepareStatement(
+                    "INSERT INTO entries (notes, duration, parent_project_id) VALUES (?, ?, ?)",
+                    PreparedStatement.RETURN_GENERATED_KEYS
+            );
+            entryInsertQuery.setString(1, initialEntry.notes);
+            entryInsertQuery.setInt(2, initialEntry.duration);
+            entryInsertQuery.setLong(3, project.id);
+
+            int rowsAffected = entryInsertQuery.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new RuntimeException("No rows affected. SQL Failed");
+            }
+
+            try (ResultSet generatedKeys = entryInsertQuery.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    initialEntry.id = generatedKeys.getLong(1);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
 
         // Store directory information in .flare folder
         XmlWriter writer = new XmlWriter();

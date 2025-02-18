@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class Entry {
-    public int id;
+    public long id;
     public String notes;
     public int duration;
-    public int parentProjectId;
+    public long parentProjectId;
     public String createdAt;
     public ArrayList<String> modifiedFiles;
 

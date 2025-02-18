@@ -36,6 +36,10 @@ public class XmlWriter {
         projectTitleElement.appendChild(document.createTextNode(project.title));
         root.appendChild(projectTitleElement);
 
+        Element projectIdElement = document.createElement("Id");
+        projectIdElement.appendChild(document.createTextNode(String.valueOf(project.id)));
+        root.appendChild(projectIdElement);
+
         // Add Language to root
         Element projectLanguageElement = document.createElement("Language");
         projectLanguageElement.appendChild(document.createTextNode(project.language));

@@ -13,6 +13,8 @@ import data.models.Project;
 import runtime.util.CliArgumentsParser;
 
 import java.util.Scanner;
+import java.sql.Connection;
+import java.sql.DriverManager;
 
 public class Main {
 
@@ -23,13 +25,23 @@ public class Main {
         DatabaseContext db = new DatabaseContext();
         CliArgumentsParser cli = new CliArgumentsParser(args);
         AppModeInterface app;
+        Connection context = null;
+        try {
+            Class.forName("org.postgresql.Driver");
+            context = DriverManager
+                    .getConnection("jdbc:postgresql://localhost:5432/flaredb",
+                            "postgres", "Jackson#731");
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName()+ ": " + e.getMessage());
+            System.exit(0);
+        }
 
         switch (cli.getAppMode()) {
             case UNKNOWN:
                 System.out.println("Bad arguments.");
                 return;
             case INTERACTIVE:
-                app = new InteractiveMode(input, db);
+                app = new InteractiveMode(input, context);
                 app.Run();
                 break;
             case INITIALIZE:
@@ -39,7 +51,7 @@ public class Main {
                 // as much resilience as just passing in
                 // an object will null values
                 Project project = cli.getInitArguments();
-                app = new InitializerMode(project);
+                app = new InitializerMode(project, context);
                 app.Run();
                 break;
             case CHECK_VERSION:

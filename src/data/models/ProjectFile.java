@@ -6,6 +6,6 @@ public class ProjectFile {
     public String fileType;
     public String hash;
     public String iteratedAt;
-    public int parentProjectId;
-    public int parentEntryId;
+    public long parentProjectId;
+    public long parentEntryId;
 }
