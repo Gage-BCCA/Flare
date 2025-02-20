@@ -115,6 +115,9 @@ public class InitializerMode implements AppModeInterface{
     }
 
     private void getAllFiles(File directory, ArrayList<File> filesContainer) {
+        if (directory.getName().equals(".git")) {
+            return;
+        }
         File[] files = directory.listFiles();
         if (files != null) {
             for(File file : files) {
