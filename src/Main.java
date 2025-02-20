@@ -3,9 +3,7 @@ import appdriver.AppModeInterface;
 import appdriver.InitializerMode;
 import appdriver.InteractiveMode;
 
-// Database Context
 import appdriver.VersionCheckerMode;
-import data.DatabaseContext;
 
 // Data models
 import data.models.Project;
@@ -22,7 +20,6 @@ public class Main {
 
 
         Scanner input = new Scanner(System.in);
-        DatabaseContext db = new DatabaseContext();
         CliArgumentsParser cli = new CliArgumentsParser(args);
         AppModeInterface app;
         Connection context = null;
@@ -30,7 +27,7 @@ public class Main {
             Class.forName("org.postgresql.Driver");
             context = DriverManager
                     .getConnection("jdbc:postgresql://localhost:5432/flaredb",
-                            "postgres", "Jackson#731");
+                            "postgres", "password");
         } catch (Exception e) {
             System.err.println(e.getClass().getName()+ ": " + e.getMessage());
             System.exit(0);

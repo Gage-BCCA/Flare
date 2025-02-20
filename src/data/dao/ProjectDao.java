@@ -3,11 +3,26 @@ package data.dao;
 import data.DaoInterface;
 import data.models.Project;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class ProjectDao implements DaoInterface<Project> {
 
-    public ArrayList<Project> getAll() {
+    private final Connection connection;
+
+    public ProjectDao(Connection connection) {
+        this.connection = connection;
+    }
+
+    public ArrayList<Project> getAll() throws SQLException {
+
+        String sql = """
+                SELECT  *
+                FROM    projects
+                """;
+
+
         return new ArrayList<Project>();
     }
 

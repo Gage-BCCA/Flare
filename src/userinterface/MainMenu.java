@@ -9,27 +9,14 @@ public class MainMenu {
 
     private final Scanner input;
     final private String logo = """
-                                   _                    \s
-              /\\  /\\__ _ _ __   __| |___                \s
-             / /_/ / _` | '_ \\ / _` / __|               \s
-            / __  / (_| | | | | (_| \\__ \\               \s
-            \\/ /_/ \\__,_|_| |_|\\__,_|___/               \s
-                                                        \s
-               ___                                      \s
-              /___\\_ __                                 \s
-             //  // '_ \\                                \s
-            / \\_//| | | |                               \s
-            \\___/ |_| |_|                               \s
-                                                        \s
-                             _                         _\s
-              /\\ /\\___ _   _| |__   ___   __ _ _ __ __| |
-             / //_/ _ \\ | | | '_ \\ / _ \\ / _` | '__/ _` |
-            / __ \\  __/ |_| | |_) | (_) | (_| | | | (_| |
-            \\/  \\/\\___|\\__, |_.__/ \\___/ \\__,_|_|  \\__,_|
-                       |___/                            \s
-            
+             _______  __          ___      .______       _______  _______  .______  \s
+            |   ____||  |        /   \\     |   _  \\     |   ____||       \\ |   _  \\ \s
+            |  |__   |  |       /  ^  \\    |  |_)  |    |  |__   |  .--.  ||  |_)  |\s
+            |   __|  |  |      /  /_\\  \\   |      /     |   __|  |  |  |  ||   _  < \s
+            |  |     |  `----./  _____  \\  |  |\\  \\----.|  |____ |  '--'  ||  |_)  |\s
+            |__|     |_______/__/     \\__\\ | _| `._____||_______||_______/ |______/ \s
+                                                                                    \s
             Track your time spent coding.
-            ====================================================
             """;
 
     public MainMenu(Scanner input) {
@@ -41,11 +28,18 @@ public class MainMenu {
     }
 
     public void printMainMenu() {
-        System.out.println("4 - Search for Entries By Language");
-        System.out.println("3 - Create an data.Entry");
-        System.out.println("2 - Show Most Recent data.Entry");
-        System.out.println("1 - Show All Entries");
-        System.out.println("0 - Exit Program");
+        System.out.println("============================================");
+        System.out.println("|               MAIN MENU                   |");
+        System.out.println("| 1 - Show Most Recent Entries              |");
+        System.out.println("| 2 - Show All Project Urls                 |");
+        System.out.println("| 3 - Create an entry                       |");
+        System.out.println("| 4 - Create a Project                      |");
+        System.out.println("| 5 - Search for Projects By Language       |");
+        System.out.println("| 6 - Search for Entries By Project Title   |");
+        System.out.println("| 7 - Delete an Entry by ID                 |");
+        System.out.println("| 8 - Delete a Project by ID                |");
+        System.out.println("| 0 - Exit Program                          |");
+        System.out.println("============================================");
         System.out.print("> ");
     }
 

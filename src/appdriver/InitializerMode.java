@@ -17,74 +17,49 @@ import data.models.Project;
 import data.models.ProjectFile;
 
 import runtime.crypto.Hasher;
+import runtime.util.FlareFolder;
 import runtime.xml.XmlWriter;
 
 public class InitializerMode implements AppModeInterface{
-    private final String initFolderName = "\\.flare";
 
-    private final File originDirectory;
-
-    private final Path initFolder;
-
-    private final String projectName;
-    private final String projectDescription;
-    private final String projectLanguage;
-    private final String projectUrl;
-    private final String projectDir;
+    private final FlareFolder flareFolder;
+    private final Project project;
     private final Connection context;
 
 
     public InitializerMode(Project providedProject, Connection context)
     {
         // Get the directory that the program is being executed from
-        this.originDirectory = new File(System.getProperty("user.dir"));
+        File originDirectory = new File(System.getProperty("user.dir"));
 
-        // Construct the initialization folder path
-        this.initFolder = Paths.get(originDirectory + initFolderName);
+        this.flareFolder = new FlareFolder(originDirectory);
 
-        // Construct a project with the provided project from Main
-        // This will be filled out later in Run()
-        this.projectName = providedProject.title;
-        this.projectDescription = providedProject.description;
-        this.projectLanguage = providedProject.language;
-        this.projectUrl = providedProject.url;
-        this.projectDir = originDirectory.getName();
+        this.project = providedProject;
+        project.localFileDir = originDirectory.getName();
+
         this.context = context;
     }
 
     public void Run() {
 
-        // Check if Folder is already initialized
-        if (checkIfFolderAlreadyInitialized()) {
-            System.out.println("Project already has Flare repo.");
+        if (flareFolder.exists) {
+            System.out.println("Project already has a Flare Repo");
             return;
         }
 
         // Create a .flare folder
-        try {
-            Files.createDirectory(initFolder);
-        } catch (IOException e) {
-            System.out.println("Fatal Error: " + e.getMessage());
-        }
-
-        // Create Project object
-        Project project = new Project();
-        project.title = projectName;
-        project.description = projectDescription;
-        project.language = projectLanguage;
-        project.localFileDir = projectDir;
-        project.url = projectUrl;
+        flareFolder.init();
 
         try {
             PreparedStatement projectInsertQuery = context.prepareStatement(
-                    "INSERT INTO projects (title, description, language, localFileDir, url) VALUES (?, ?, ?, ?, ?)",
+                    "INSERT INTO projects (title, description, language, local_file_dir, url) VALUES (?, ?, ?, ?, ?)",
                     PreparedStatement.RETURN_GENERATED_KEYS
             );
-            projectInsertQuery.setString(1, projectName);
-            projectInsertQuery.setString(2, projectDescription);
-            projectInsertQuery.setString(3, projectLanguage);
-            projectInsertQuery.setString(4, projectDir);
-            projectInsertQuery.setString(5, projectUrl);
+            projectInsertQuery.setString(1, project.title);
+            projectInsertQuery.setString(2, project.description);
+            projectInsertQuery.setString(3, project.language);
+            projectInsertQuery.setString(4, project.localFileDir);
+            projectInsertQuery.setString(5, project.url);
 
             int rowsAffected = projectInsertQuery.executeUpdate();
 
@@ -100,12 +75,9 @@ public class InitializerMode implements AppModeInterface{
             throw new RuntimeException(e);
         }
 
-        // Insert into Database and get Project ID for Entry
-        // and project files to be inserted as well
-
         // Iterate and store all files
         ArrayList<File> fileList = new ArrayList<>();
-        getAllFiles(originDirectory, fileList);
+        getAllFiles(flareFolder.parentDirectoryAsFile(), fileList);
 
         // Construct and store all Project File objects
         ArrayList<ProjectFile> projectFileList = new ArrayList<>();
@@ -175,18 +147,13 @@ public class InitializerMode implements AppModeInterface{
         // Store directory information in .flare folder
         XmlWriter writer = new XmlWriter();
         try {
-            writer.CreateNew(project, projectFileList, initFolder.toString());
+            writer.CreateNew(project, projectFileList, flareFolder.path().toString());
         } catch (Exception e){
             System.out.println(e.getMessage());
         }
 
         System.out.println("Flare Initialized.");
 
-    }
-
-
-    private boolean checkIfFolderAlreadyInitialized() {
-        return Files.exists(initFolder);
     }
 
     private void getAllFiles(File directory, ArrayList<File> filesContainer) {
