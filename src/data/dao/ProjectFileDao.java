@@ -3,32 +3,43 @@ package data.dao;
 import data.DaoInterface;
 import data.models.ProjectFile;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class ProjectFileDao implements DaoInterface<ProjectFile> {
+public class ProjectFileDao {
 
-    public ArrayList<ProjectFile> getAll() {
-        return new ArrayList<ProjectFile>();
+    private Connection connection;
+
+    public ProjectFileDao() {};
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
     }
 
-    public ProjectFile getById(int id) {
-        return new ProjectFile();
-    }
+    public boolean createProjectFile(ProjectFile newProjectFile) {
+        try {
+            String sql = """
+                    INSERT INTO project_files (filename, filetype, hash, parent_project_id, parent_entry_id)
+                    VALUES (?,?,?,?,?)
+                    """;
+            PreparedStatement pstmt = connection.prepareStatement(sql);
+            pstmt.setString(1, newProjectFile.fileName);
+            pstmt.setString(2, newProjectFile.fileType);
+            pstmt.setString(3, newProjectFile.hash);
+            pstmt.setLong(4, newProjectFile.parentProjectId);
+            pstmt.setLong(5, newProjectFile.parentEntryId);
+            int rowsAffected = pstmt.executeUpdate();
 
-    public void createNew(ProjectFile newProjectFile) {
-        return;
-    }
+            if (rowsAffected <= 0) {
+                return false;
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
 
-    public void deleteById(int id) {
-        return;
+        return true;
     }
-
-    public void deleteAll() {
-        return;
-    }
-
-    public void updateRecord(int id, ProjectFile updatedProjectFile) {
-        return;
-    }
-
 }

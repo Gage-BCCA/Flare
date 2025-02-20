@@ -9,6 +9,7 @@ public class Entry {
     public String notes;
     public int duration;
     public long parentProjectId;
+    public String parentProjectName;
     public String createdAt;
     public ArrayList<String> modifiedFiles;
 

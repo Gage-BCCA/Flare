@@ -6,9 +6,13 @@ import appdriver.InteractiveMode;
 import appdriver.VersionCheckerMode;
 
 // Data models
+import data.dao.EntryDao;
+import data.dao.ProjectDao;
+import data.dao.ProjectFileDao;
 import data.models.Project;
 
 import runtime.util.CliArgumentsParser;
+import userinterface.FlareOutput;
 
 import java.util.Scanner;
 import java.sql.Connection;
@@ -33,12 +37,25 @@ public class Main {
             System.exit(0);
         }
 
+        // Construct Dao objects to pass to app drivers
+        ProjectDao projectDao = new ProjectDao();
+        EntryDao entryDao = new EntryDao();
+        ProjectFileDao projectFileDao = new ProjectFileDao();
+
+        if (context != null) {
+            projectDao.setConnection(context);
+            entryDao.setConnection(context);
+            projectFileDao.setConnection(context);
+        }
+
+        FlareOutput ui = new FlareOutput();
+
         switch (cli.getAppMode()) {
             case UNKNOWN:
                 System.out.println("Bad arguments.");
                 return;
             case INTERACTIVE:
-                app = new InteractiveMode(input, context);
+                app = new InteractiveMode(input, projectDao, entryDao, projectFileDao, context, ui);
                 app.Run();
                 break;
             case INITIALIZE:
@@ -48,7 +65,7 @@ public class Main {
                 // as much resilience as just passing in
                 // an object will null values
                 Project project = cli.getInitArguments();
-                app = new InitializerMode(project, context);
+                app = new InitializerMode(project, projectDao, entryDao, projectFileDao);
                 app.Run();
                 break;
             case CHECK_VERSION:

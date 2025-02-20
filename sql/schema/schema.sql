@@ -18,9 +18,9 @@ CREATE TABLE entries (
 
 CREATE  TABLE project_files (
     id SERIAL PRIMARY KEY,
-    filename VARCHAR(255),
-    filetype VARCHAR(25),
-    hash VARCHAR(255),
+    filename TEXT,
+    filetype TEXT,
+    hash TEXT,
     iterated_at TIMESTAMP DEFAULT NOW(),
     parent_project_id INTEGER REFERENCES projects (id) ON DELETE CASCADE,
     parent_entry_id INTEGER REFERENCES entries (id) ON DELETE CASCADE

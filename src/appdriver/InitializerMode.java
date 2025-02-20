@@ -12,6 +12,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 
 
+import data.dao.EntryDao;
+import data.dao.ProjectDao;
+import data.dao.ProjectFileDao;
 import data.models.Entry;
 import data.models.Project;
 import data.models.ProjectFile;
@@ -24,10 +27,13 @@ public class InitializerMode implements AppModeInterface{
 
     private final FlareFolder flareFolder;
     private final Project project;
-    private final Connection context;
+
+    private final ProjectDao projectDao;
+    private final EntryDao entryDao;
+    private final ProjectFileDao projectFileDao;
 
 
-    public InitializerMode(Project providedProject, Connection context)
+    public InitializerMode(Project providedProject, ProjectDao projectDao, EntryDao entryDao, ProjectFileDao projectFileDao)
     {
         // Get the directory that the program is being executed from
         File originDirectory = new File(System.getProperty("user.dir"));
@@ -37,7 +43,9 @@ public class InitializerMode implements AppModeInterface{
         this.project = providedProject;
         project.localFileDir = originDirectory.getName();
 
-        this.context = context;
+        this.projectDao = projectDao;
+        this.entryDao = entryDao;
+        this.projectFileDao = projectFileDao;
     }
 
     public void Run() {
@@ -50,30 +58,15 @@ public class InitializerMode implements AppModeInterface{
         // Create a .flare folder
         flareFolder.init();
 
-        try {
-            PreparedStatement projectInsertQuery = context.prepareStatement(
-                    "INSERT INTO projects (title, description, language, local_file_dir, url) VALUES (?, ?, ?, ?, ?)",
-                    PreparedStatement.RETURN_GENERATED_KEYS
-            );
-            projectInsertQuery.setString(1, project.title);
-            projectInsertQuery.setString(2, project.description);
-            projectInsertQuery.setString(3, project.language);
-            projectInsertQuery.setString(4, project.localFileDir);
-            projectInsertQuery.setString(5, project.url);
 
-            int rowsAffected = projectInsertQuery.executeUpdate();
 
-            try (ResultSet generatedKeys = projectInsertQuery.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    project.id = generatedKeys.getLong(1);
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        // Create initial entry for project and assign the generated ID to it
+        Entry initialEntry = new Entry(
+                "Flare Initialized.",
+                0,
+                project.id
+        );
+        initialEntry.id = entryDao.createEntryAndReturnGeneratedKey(initialEntry);
 
         // Iterate and store all files
         ArrayList<File> fileList = new ArrayList<>();
@@ -82,13 +75,10 @@ public class InitializerMode implements AppModeInterface{
         // Construct and store all Project File objects
         ArrayList<ProjectFile> projectFileList = new ArrayList<>();
         for (File file : fileList) {
-
             ProjectFile pf = new ProjectFile();
-
             pf.fileName = file.getName();
-
-            // To reference the Project with a Foreign Key
             pf.parentProjectId = project.id;
+            pf.parentEntryId = initialEntry.id;
 
             // Manipulate the file name to get file type
             String extension = "";
@@ -109,40 +99,8 @@ public class InitializerMode implements AppModeInterface{
             }
 
             projectFileList.add(pf);
+            projectFileDao.createProjectFile(pf);
         }
-
-        // Create initial entry for project
-        Entry initialEntry = new Entry(
-                "Flare Initialized.",
-                0
-        );
-
-        try {
-            PreparedStatement entryInsertQuery = context.prepareStatement(
-                    "INSERT INTO entries (notes, duration, parent_project_id) VALUES (?, ?, ?)",
-                    PreparedStatement.RETURN_GENERATED_KEYS
-            );
-            entryInsertQuery.setString(1, initialEntry.notes);
-            entryInsertQuery.setInt(2, initialEntry.duration);
-            entryInsertQuery.setLong(3, project.id);
-
-            int rowsAffected = entryInsertQuery.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new RuntimeException("No rows affected. SQL Failed");
-            }
-
-            try (ResultSet generatedKeys = entryInsertQuery.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    initialEntry.id = generatedKeys.getLong(1);
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
 
         // Store directory information in .flare folder
         XmlWriter writer = new XmlWriter();
