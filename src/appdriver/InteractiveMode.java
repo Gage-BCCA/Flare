@@ -42,45 +42,385 @@ public class InteractiveMode implements AppModeInterface {
         MainMenu mainMenu = new MainMenu(input);
         mainMenu.printLogo();
         while (programActive) {
-            mainMenu.printMainMenu();
-            String option = input.nextLine();
-            switch (option) {
-                case "1":
-                    handlePrintRecentEntries();
+            String rawUserInput = ui.emptyPrompt();
+            String[] commands;
+            try {
+                commands = rawUserInput.split(" ");
+            } catch (Exception e) {
+                System.out.println("Bad command.");
+                continue;
+            }
+            if (commands.length < 2) {
+                System.out.println("Bad command.");
+                continue;
+            }
+            switch (commands[0]) {
+                case ".project":
+                    getProjectCommand(commands);
                     break;
-                case "2":
-                    handlePrintAllProjectUrls();
+                case ".entries":
+                    getEntriesCommand(commands);
                     break;
-                case "3":
-                    handleCreateEntry(context);
-                    break;
-                case "4":
-                    handleCreateProject();
-                    break;
-                case "5":
-                    handleSearchByLanguage();
-                    break;
-                case "6":
-                    handleSearchEntriesByProjectTitle();
-                    break;
-                case "7":
-                    handleDeleteEntryById();
-                    break;
-                case "8":
-                    handleDeleteProjectById();
-                    break;
-                case "0":
+                case ".exit":
                     programActive = false;
+                    break;
+                default:
+                    System.out.println("Bad command.");
             }
         }
     }
 
-    private void handlePrintRecentEntries() {
-        ui.printEntryList(entryDao.getRecentEntries());
+    /********************************
+            PROJECT COMMANDS
+     ********************************/
+    private void getProjectCommand(String[] commands) {
+
+        // if the first flag contains a number...
+        if (commands[1].matches(".*\\d.*")) {
+
+            // Break here if the command doesn't contain an additional
+            // command, because we are operating on individual projects
+            // and need an additional action
+            if (commands.length < 3 || commands.length > 3) {
+                printProjectProperUsage();
+                return;
+            }
+
+            getIndividualProjectCommands(commands);
+            return;
+
+        } else {
+            switch(commands[1]) {
+                case "all":
+                    getAllProjects();
+                    break;
+                case "recent":
+                    getMostRecentProject();
+                    break;
+                case "oldest":
+                    getOldestProject();
+                    break;
+                case "create":
+                    createProject();
+                    break;
+                case "search":
+                    if (commands.length != 4){
+                        System.out.println("Bad Search Parameters");
+                    }
+                    handleProjectSearch(commands);
+                    break;
+                case "urls":
+                    getAllProjectUrls();
+                    break;
+                default:
+                    // Unknown command
+                    return;
+            }
+        }
+
+    }
+
+    private void getIndividualProjectCommands(String[] commands) {
+        long id;
+        try {
+            id = Long.parseLong(commands[1]);
+        } catch (Exception e) {
+            System.out.println("Bad Command.");
+            return;
+        }
+        switch(commands[2]) {
+            case "get":
+                getProjectById(id);
+                break;
+            case "update":
+                updateProject(id);
+                break;
+            case "delete":
+                deleteProjectById(id);
+                break;
+            case "entries":
+                // get all entries
+                break;
+            case "url":
+                getProjectUrl(id);
+                break;
+
+        }
+    }
+
+
+    /********************************
+            ENTRY COMMANDS
+     ********************************/
+    private void getEntriesCommand(String[] commands) {
+        // if the first flag contains a number...
+        if (commands[1].matches(".*\\d.*")) {
+
+            // Break here if the command doesn't contain an additional
+            // command, because we are operating on individual projects
+            // and need an additional action
+            if (commands.length < 3) {
+                printEntriesProperUsage();
+                return;
+            }
+
+            getIndividualProjectCommands(commands);
+            return;
+
+        } else {
+            switch (commands[1]) {
+                case "update":
+                    // get entry ID and update
+                    break;
+                case "recent":
+                    getRecentEntries();
+                    break;
+                case "create":
+                    createEntry(context);
+                    break;
+                case "search":
+                    // check and see if has 4 commands
+                    // call next function based on 3rd command (search parameter)
+                    // next function will return target projects
+                    break;
+                default:
+                    System.out.println("Bad Command.");
+                    return;
+            }
+        }
+    }
+
+    private void getIndividualEntryCommands(String[] commands) {
+        long id;
+        try {
+            id = Long.parseLong(commands[1]);
+        } catch (Exception e) {
+            System.out.println("Bad Command.");
+            return;
+        }
+
+        switch(commands[2]) {
+            case "get":
+                getProjectById(id);
+                break;
+            case "update":
+                updateProject(id);
+                break;
+            case "delete":
+                deleteProjectById(id);
+                break;
+            case "recent":
+                getRecentEntries();
+                break;
+            case "oldest":
+                getOlderEntries();
+                break;
+            case "url":
+                getProjectUrl(id);
+                break;
+        }
+    }
+
+
+    /********************************
+        PROPER USAGE FUNCTIONS
+     ********************************/
+    private void printProjectProperUsage() {
+        System.out.println("Learn to use a command, nerd.");
+    }
+
+    private void printEntriesProperUsage() {
+        System.out.println("Learn to use a command, nerd.");
+    }
+
+
+    /********************************
+     PROJECTS -- GET FUNCTIONS
+     ********************************/
+    private void getAllProjects() {
+        ui.printProjectList(projectDao.getAllProjects());
+    }
+
+    private void getAllProjectUrls() {
+        ui.printProjectUrls(projectDao.getAllProjects());
         ui.pause();
     }
 
-    private void handleCreateEntry(Connection context){
+    private void getProjectById(long id) {
+        ui.printProjectList(projectDao.getProjectById(id));
+    }
+
+    private void getProjectUrl(long id) {
+        ui.printProjectUrls(projectDao.getProjectById(id));
+    }
+
+    private void getMostRecentProject() {
+        ui.printProjectList(projectDao.getMostRecentProject());
+    }
+
+    private void getOldestProject() {
+        ui.printProjectList(projectDao.getOldestProject());
+    }
+
+
+    /********************************
+     PROJECTS - UPDATE FUNCTION
+     ********************************/
+    private void updateProject(long id) {
+        Project newProject = new Project();
+        newProject.title = ui.prompt("Enter Title (leave blank to keep original)");
+        newProject.language = ui.prompt("Enter Language (leave blank to keep original)");
+        newProject.description = ui.prompt("Enter Description (leave blank to keep original)");
+        newProject.url = ui.prompt("Enter Url (leave blank to keep original)");
+        if (projectDao.updateProject(id, newProject)) {
+            ui.successWithMessage("Project Updated");
+        } else {
+            ui.failure();
+        }
+
+        ui.pause();
+    }
+
+
+    /********************************
+        PROJECTS - SEARCH FUNCTIONS
+     ********************************/
+    private void handleProjectSearch(String[] commands) {
+
+        String searchParameter = commands[2].toLowerCase();
+        String searchTerm = commands[3];
+        switch (searchParameter) {
+            case "language":
+                searchByLanguage(searchTerm);
+                break;
+            case "title":
+                searchByTitle(searchTerm);
+        }
+    }
+
+    private void searchByLanguage(String searchTerm) {
+        ArrayList<Project> projects = projectDao.searchByLanguage(searchTerm);
+        ui.printProjectList(projects);
+        ui.pause();
+    }
+
+    private void searchByTitle(String searchTerm) {
+        ArrayList<Project> projects = projectDao.searchByTitle(searchTerm);
+        ui.printProjectList(projects);
+        ui.pause();
+    }
+
+
+    /********************************
+        PROJECTS - DELETE FUNCTION
+     ********************************/
+    private void deleteProjectById(long id) {
+        if (projectDao.deleteProjectById(id)) {
+            ui.success();
+        } else {
+            ui.failure();
+        }
+
+        ui.pause();
+    }
+
+
+    /********************************
+     PROJECTS - CREATE FUNCTION
+     ********************************/
+    public void createProject() {
+        Project newProject = new Project();
+        newProject.localFileDir = ui.prompt("Enter full file path to root directory (C:\\\\projects\\\\myproject): ");
+        newProject.title = ui.prompt("Enter project title: ");
+        newProject.language = ui.prompt("Enter primary project language:");
+        newProject.description = ui.prompt("Enter a short description:");
+        newProject.url = ui.prompt("Enter project URL (github, personal site, etc) (leave blank for none): ");
+        newProject.id = projectDao.createProjectAndReturnGeneratedKey(newProject);
+
+        Entry initialEntry = new Entry(
+                "Flare Initialized.",
+                0,
+                newProject.id
+        );
+        initialEntry.id = entryDao.createEntryAndReturnGeneratedKey(initialEntry);
+
+        // TODO: DO ALL THE INITIALIZER STUFF
+        File dir = new File(newProject.localFileDir);
+        if (!dir.exists()) {
+            ui.failure();
+            return;
+        }
+
+        FlareFolder flareFolder = new FlareFolder(dir);
+        if (flareFolder.exists) {
+            ui.failureWithMessage("Project already created.");
+            return;
+        }
+
+        flareFolder.init();
+
+        // Iterate and store all files
+        ArrayList<File> fileList = new ArrayList<>();
+        getAllFiles(flareFolder.parentDirectoryAsFile(), fileList);
+
+        // Construct and store all Project File objects
+        ArrayList<ProjectFile> projectFileList = new ArrayList<>();
+        for (File file : fileList) {
+            ProjectFile pf = new ProjectFile();
+            pf.fileName = file.getName();
+            pf.parentProjectId = newProject.id;
+            pf.parentEntryId = initialEntry.id;
+
+            // Manipulate the file name to get file type
+            String extension = "";
+            int i = file.getAbsolutePath().lastIndexOf('.');
+            if (i > 0) {
+                extension = file.getAbsolutePath().substring(i+1);
+                pf.fileType = extension;
+            } else {
+                pf.fileType = null;
+            }
+
+            // Attempt to find the hash value
+            try {
+                pf.hash = (new Hasher(file).getSha256AsString());
+            } catch (Exception e) {
+                pf.hash = null;
+            }
+
+            projectFileList.add(pf);
+            projectFileDao.createProjectFile(pf);
+        }
+        // Store directory information in .flare folder
+        XmlWriter writer = new XmlWriter();
+        try {
+            writer.CreateNew(newProject, projectFileList, flareFolder.path().toString());
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+
+        System.out.println("Flare Initialized.");
+        ui.success();
+        ui.pause();
+    }
+
+
+    /********************************
+        ENTRIES - GET FUNCTIONS
+     ********************************/
+    private void getRecentEntries() {
+        ui.printEntryList(entryDao.getRecentEntries());
+    }
+
+    private void getOlderEntries() {
+        ui.printEntryList(entryDao.getOlderEntries());
+    }
+
+
+    /********************************
+        ENTRIES - CREATE FUNCTION
+     ********************************/
+    private void createEntry(Connection context){
         String projectTitle = ui.prompt("Enter Project Title:");
         boolean projectFound = false;
         long projectId = 0;
@@ -157,15 +497,11 @@ public class InteractiveMode implements AppModeInterface {
 
     }
 
-    private void handleSearchByLanguage() {
-        String targetLanguage = ui.prompt("Enter Language to Search: ");
-        ArrayList<Project> projects = projectDao.searchByLanguage(targetLanguage);
-        ui.printProjectList(projects);
-        ui.success();
-        ui.pause();
-    }
 
-    private void handleDeleteEntryById() {
+    /********************************
+     ENTRIES - DELETE FUNCTION
+     ********************************/
+    private void deleteEntryById(long id) {
         long entryId = Long.parseLong(ui.prompt("Enter Entry ID to delete (this is permanent):"));
         if (entryDao.deleteEntryById(entryId)) {
             ui.success();
@@ -177,100 +513,33 @@ public class InteractiveMode implements AppModeInterface {
 
     }
 
-    private void handleDeleteProjectById() {
-        long targetProjectId = Long.parseLong(ui.prompt("Enter Project ID to delete (this is permanent):"));
-        if (projectDao.deleteProjectById(targetProjectId)) {
-            ui.success();
-        } else {
-            ui.failure();
-        }
 
-        ui.pause();
+    /********************************
+     ENTRIES - UPDATE FUNCTION
+     ********************************/
+    private void updateEntry(long id) {
+        return;
     }
 
-    public void handleCreateProject() {
-        Project newProject = new Project();
-        newProject.localFileDir = ui.prompt("Enter full file path to root directory (C:\\\\projects\\\\myproject): ");
+
+    /********************************
+     ENTRIES - SEARCH FUNCTIONS
+     ********************************/
+    private void handleEntrySearch(String[] commands) {}
+
+    private void searchEntriesByNotes(String searchTerm) {}
+
+    private void searchEntriesByProjectTitle(String searchTerm) {}
+
+    private void searchEntriesByProjectLanguage(String searchTerm) {}
+
+    private void searchEntriesByProjectFileName(String searchTerm) {}
+
+    private void searchEntriesByDate(String searchTerm) {}
 
 
 
-        newProject.title = ui.prompt("Enter project title: ");
-        newProject.language = ui.prompt("Enter primary project language:");
-        newProject.description = ui.prompt("Enter a short description:");
-        newProject.url = ui.prompt("Enter project URL (github, personal site, etc) (leave blank for none): ");
-        newProject.id = projectDao.createProjectAndReturnGeneratedKey(newProject);
 
-        Entry initialEntry = new Entry(
-                "Flare Initialized.",
-                0,
-                newProject.id
-        );
-        initialEntry.id = entryDao.createEntryAndReturnGeneratedKey(initialEntry);
-
-        // TODO: DO ALL THE INITIALIZER STUFF
-        File dir = new File(newProject.localFileDir);
-        if (!dir.exists()) {
-            ui.failure();
-            return;
-        }
-
-        FlareFolder flareFolder = new FlareFolder(dir);
-        if (flareFolder.exists) {
-            ui.failureWithMessage("Project already created.");
-            return;
-        }
-
-        flareFolder.init();
-
-        // Iterate and store all files
-        ArrayList<File> fileList = new ArrayList<>();
-        getAllFiles(flareFolder.parentDirectoryAsFile(), fileList);
-
-        // Construct and store all Project File objects
-        ArrayList<ProjectFile> projectFileList = new ArrayList<>();
-        for (File file : fileList) {
-            ProjectFile pf = new ProjectFile();
-            pf.fileName = file.getName();
-            pf.parentProjectId = newProject.id;
-            pf.parentEntryId = initialEntry.id;
-
-            // Manipulate the file name to get file type
-            String extension = "";
-            int i = file.getAbsolutePath().lastIndexOf('.');
-            if (i > 0) {
-                extension = file.getAbsolutePath().substring(i+1);
-                pf.fileType = extension;
-            } else {
-                pf.fileType = null;
-            }
-
-            // Attempt to find the hash value
-            try {
-                pf.hash = (new Hasher(file).getSha256AsString());
-            } catch (Exception e) {
-                pf.hash = null;
-            }
-
-            projectFileList.add(pf);
-            projectFileDao.createProjectFile(pf);
-        }
-        // Store directory information in .flare folder
-        XmlWriter writer = new XmlWriter();
-        try {
-            writer.CreateNew(newProject, projectFileList, flareFolder.path().toString());
-        } catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-
-        System.out.println("Flare Initialized.");
-        ui.success();
-        ui.pause();
-    }
-
-    private void handlePrintAllProjectUrls() {
-        ui.printProjectUrls(projectDao.getAllProjects());
-        ui.pause();
-    }
 
     private void handleSearchEntriesByProjectTitle() {
         String targetProjectTitle = ui.prompt("Enter Project Title:");

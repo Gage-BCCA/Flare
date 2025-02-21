@@ -1,10 +1,14 @@
+DROP TABLE IF EXISTS project_files;
+DROP TABLE IF EXISTS entries;
+DROP TABLE IF EXISTS projects;
+
 CREATE TABLE projects (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(500),
-    language VARCHAR(100),
+    title TEXT,
+    language TEXT,
     description TEXT,
-    url VARCHAR(255),
-    local_file_dir VARCHAR(255),
+    url TEXT,
+    local_file_dir TEXT,
     created_at TIMESTAMP DEFAULT now()
 );
 

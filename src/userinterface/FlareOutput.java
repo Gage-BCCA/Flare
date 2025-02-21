@@ -11,11 +11,11 @@ public class FlareOutput {
     private final Scanner input = new Scanner(System.in);
 
     public void success() {
-        System.out.println(">>> Action SUCCESS <<<\n\n");
+        System.out.println(">>> Action SUCCESS <<<");
     }
 
-    public void sucessWithMessage(String message) {
-        System.out.printf(">>> Action SUCCESS: %s <<<%n%n", message);
+    public void successWithMessage(String message) {
+        System.out.printf(">>> Action SUCCESS: %s <<<", message);
     }
 
     public void failure() {
@@ -23,11 +23,11 @@ public class FlareOutput {
     }
 
     public void failureWithMessage(String message) {
-        System.out.printf("> Action FAILURE: %s <%n", message);
+        System.out.printf("> Action FAILURE: %s <", message);
     }
 
     public void pause() {
-        System.out.println("Press Enter to continue...");
+        System.out.print("Press Enter to continue...");
         input.nextLine();
     }
 
@@ -37,7 +37,15 @@ public class FlareOutput {
         return input.nextLine();
     }
 
+    public String emptyPrompt() {
+        System.out.print(">");
+        return input.nextLine();
+    }
+
     public void printProjectList(ArrayList<Project> projects) {
+        if (projects.isEmpty()) {
+            System.out.println("None found.");
+        }
         for (Project project : projects) {
             System.out.printf(
                     "%s --- %s --- %s --- %s%n",

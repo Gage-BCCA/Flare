@@ -116,6 +116,29 @@ public class EntryDao  {
         }
     }
 
+    public ArrayList<Entry> getOlderEntries() {
+        String sql = """
+                SELECT  entries.id, entries.notes, entries.duration, entries.created_at,
+                        projects.title
+                FROM    entries
+                INNER   JOIN projects on projects.id = entries.parent_project_id
+                ORDER   BY entries.created_at ASC
+                LIMIT   5
+                """;
+        try {
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            return constructEntryListFromResultSet(rs);
+
+
+        } catch (SQLException e) {
+            System.out.println("Bad things happened.");
+            return new ArrayList<Entry>();
+        }
+    }
+
+
+
     private ArrayList<Entry> constructEntryListFromResultSet(ResultSet rs) throws SQLException{
         ArrayList<Entry> results = new ArrayList<>();
         while (rs.next()) {

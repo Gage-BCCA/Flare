@@ -28,6 +28,55 @@ public class ProjectDao {
         }
     }
 
+    public ArrayList<Project> getProjectById(long id) {
+        try {
+            String selectSql = """
+                    SELECT  *
+                      FROM  projects
+                     WHERE  id = ?
+                     LIMIT 1;
+                    """;
+            PreparedStatement selectPstmt = connection.prepareStatement(selectSql);
+            selectPstmt.setLong(1, id);
+            ResultSet rs1 = selectPstmt.executeQuery();
+            return constructListFromResultSet(rs1);
+        } catch (SQLException e) {
+            return new ArrayList<Project>();
+        }
+    }
+
+    public ArrayList<Project> getMostRecentProject() {
+        try {
+            String sql = """
+                    SELECT  *
+                      FROM  projects
+                     ORDER  BY created_at DESC
+                     LIMIT  1;
+                    """;
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            return constructListFromResultSet(rs);
+        } catch (SQLException e) {
+            return new ArrayList<Project>();
+        }
+    }
+
+    public ArrayList<Project> getOldestProject() {
+        try {
+            String sql = """
+                    SELECT  *
+                      FROM  projects
+                     ORDER  BY created_at ASC
+                     LIMIT  1;
+                    """;
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            return constructListFromResultSet(rs);
+        } catch (SQLException e) {
+            return new ArrayList<Project>();
+        }
+    }
+
     public boolean createProject(Project newProject) {
         try {
             String sql = """
@@ -110,7 +159,7 @@ public class ProjectDao {
             String sql = """
                 SELECT  *
                   FROM  projects
-                 WHERE  LOWER(language) = LOWER(?)
+                 WHERE  LOWER(language) LIKE LOWER('%' || ? || '%')
                 """;
             PreparedStatement pstmt = connection.prepareStatement(sql);
             pstmt.setString(1, language);
@@ -127,7 +176,7 @@ public class ProjectDao {
             String sql = """
                 SELECT  *
                   FROM  projects
-                 WHERE  LOWER(title) = LOWER(?)
+                 WHERE  LOWER(title) LIKE LOWER('%' || ? || '%')
                 """;
             PreparedStatement pstmt = connection.prepareStatement(sql);
             pstmt.setString(1, title);
@@ -137,6 +186,51 @@ public class ProjectDao {
         } catch (SQLException e) {
             return new ArrayList<Project>();
         }
+    }
+
+    public boolean updateProject(long id, Project newProject) {
+        try {
+            String selectSql = """
+                SELECT  *
+                  FROM  projects
+                 WHERE  id = ?
+                 LIMIT 1;
+                """;
+            PreparedStatement selectPstmt = connection.prepareStatement(selectSql);
+            selectPstmt.setLong(1, id);
+            ResultSet rs1 = selectPstmt.executeQuery();
+            ArrayList<Project> selectResult = constructListFromResultSet(rs1);
+            Project originalProject = selectResult.getFirst();
+
+            String updateSql = """
+                    UPDATE projects
+                    SET title = ?, language = ?, description = ?, url = ?
+                    WHERE id = ?
+                    """;
+            PreparedStatement updatePstmt = connection.prepareStatement(updateSql);
+            updatePstmt.setString(1, (
+                    newProject.title.isEmpty() ? originalProject.title : newProject.title
+            ));
+            updatePstmt.setString(2, (
+                    newProject.language.isEmpty() ? originalProject.language : newProject.language
+            ));
+            updatePstmt.setString(3, (
+                    newProject.description.isEmpty() ? originalProject.description : newProject.description
+            ));
+            updatePstmt.setString(4, (
+                    newProject.url.isEmpty() ? originalProject.url : newProject.url
+            ));
+            updatePstmt.setLong(5, id);
+            int rowsAffected = updatePstmt.executeUpdate();
+            if (rowsAffected <= 0) {
+                return false;
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+        return true;
     }
 
 
