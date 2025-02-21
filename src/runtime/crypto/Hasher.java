@@ -15,23 +15,31 @@ public class Hasher {
         this.file = file;
     }
 
-    public String getSha256AsString() throws NoSuchAlgorithmException, IOException {
-        MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-        byte[] array = Files.readAllBytes(Path.of(file.getAbsolutePath()));
-        return bytesToHex(array);
-
+    public String getSha1Digest() throws NoSuchAlgorithmException, IOException {
+        MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+        String content = Files.readString(Path.of(file.getAbsolutePath()));
+        String gitHeader = "blob " + file.length() + '\0';
+        byte[] fileWithGitHeader = addArrays(gitHeader.getBytes(), content.getBytes());
+        byte[] hash = sha1.digest(fileWithGitHeader);
+        return byteArrayToHexString(hash);
     }
 
-    // Shamelessly stolen from Baeldung
-    private static String bytesToHex(byte[] hash) {
-        StringBuilder hexString = new StringBuilder(2 * hash.length);
-        for (int i = 0; i < hash.length; i++) {
-            String hex = Integer.toHexString(0xff & hash[i]);
-            if(hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
+    public String byteArrayToHexString(byte[] b) {
+        String result = "";
+        for (int i=0; i < b.length; i++) {
+            result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16).substring( 1 );
         }
-        return hexString.toString();
+        return result;
+    }
+
+    public static byte[] addArrays(byte[] arr1, byte[] arr2) {
+        int length1 = arr1.length;
+        int length2 = arr2.length;
+        byte[] result = new byte[length1 + length2];
+
+        System.arraycopy(arr1, 0, result, 0, length1);
+        System.arraycopy(arr2, 0, result, length1, length2);
+
+        return result;
     }
 }

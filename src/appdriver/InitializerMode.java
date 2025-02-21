@@ -1,15 +1,7 @@
 package appdriver;
 
-import java.io.IOException;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.sql.Connection;
-import java.sql.ResultSet;
 
 
 import data.dao.EntryDao;
@@ -92,7 +84,7 @@ public class InitializerMode implements AppModeInterface{
 
             // Attempt to find the hash value
             try {
-                pf.hash = (new Hasher(file).getSha256AsString());
+                pf.hash = (new Hasher(file).getSha1Digest());
             } catch (Exception e) {
                 System.out.println(e.getMessage());
                 pf.hash = null;
