@@ -13,6 +13,7 @@ import data.models.ProjectFile;
 
 import runtime.crypto.Hasher;
 import runtime.util.FlareFolder;
+import runtime.util.ProjectFileIterator;
 import runtime.xml.XmlWriter;
 
 public class InitializerMode implements AppModeInterface{
@@ -62,42 +63,22 @@ public class InitializerMode implements AppModeInterface{
 
         // Iterate and store all files
         ArrayList<File> fileList = new ArrayList<>();
-        getAllFiles(flareFolder.parentDirectoryAsFile(), fileList);
+        ProjectFileIterator iter = new ProjectFileIterator();
+        iter.getAllFiles(new File(project.localFileDir), fileList);
 
-        // Construct and store all Project File objects
-        ArrayList<ProjectFile> projectFileList = new ArrayList<>();
-        for (File file : fileList) {
-            ProjectFile pf = new ProjectFile();
-            pf.fileName = file.getName();
-            pf.parentProjectId = project.id;
-            pf.parentEntryId = initialEntry.id;
+        ArrayList<ProjectFile> currentProjectFileList = iter.constructProjectFilesFromFiles(fileList,
+                project.id,
+                initialEntry.id);
 
-            // Manipulate the file name to get file type
-            String extension = "";
-            int i = file.getAbsolutePath().lastIndexOf('.');
-            if (i > 0) {
-                extension = file.getAbsolutePath().substring(i+1);
-                pf.fileType = extension;
-            } else {
-                pf.fileType = null;
-            }
-
-            // Attempt to find the hash value
-            try {
-                pf.hash = (new Hasher(file).getSha1Digest());
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-                pf.hash = null;
-            }
-
-            projectFileList.add(pf);
+        iter.filterProjectFiles(currentProjectFileList);
+        for (ProjectFile pf : currentProjectFileList) {
             projectFileDao.createProjectFile(pf);
         }
 
         // Store directory information in .flare folder
         XmlWriter writer = new XmlWriter();
         try {
-            writer.CreateNew(project, projectFileList, flareFolder.path().toString());
+            writer.CreateNew(project, currentProjectFileList, flareFolder.path().toString());
         } catch (Exception e){
             System.out.println(e.getMessage());
         }

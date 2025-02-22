@@ -8,6 +8,8 @@ import data.models.Project;
 import data.models.ProjectFile;
 import runtime.crypto.Hasher;
 import runtime.util.FlareFolder;
+import runtime.util.ProjectFileIterator;
+import runtime.xml.XmlReader;
 import runtime.xml.XmlWriter;
 import userinterface.FlareOutput;
 import userinterface.MainMenu;
@@ -28,12 +30,19 @@ public class InteractiveMode implements AppModeInterface {
     private boolean programActive;
 
 
-    public InteractiveMode(Scanner input, ProjectDao projectDao, EntryDao entryDao, ProjectFileDao projectFileDao, Connection context, FlareOutput ui) {
+    public InteractiveMode(Scanner input,
+                           ProjectDao projectDao,
+                           EntryDao entryDao,
+                           ProjectFileDao projectFileDao,
+                           Connection context,
+                           FlareOutput ui) {
         this.input = input;
         this.ui = ui;
+
         this.projectDao = projectDao;
         this.entryDao = entryDao;
         this.projectFileDao = projectFileDao;
+
         this.context = context;
         this.programActive = true;
     }
@@ -71,7 +80,7 @@ public class InteractiveMode implements AppModeInterface {
     }
 
     /********************************
-            PROJECT COMMANDS
+     PROJECT COMMANDS
      ********************************/
     private void getProjectCommand(String[] commands) {
 
@@ -87,10 +96,9 @@ public class InteractiveMode implements AppModeInterface {
             }
 
             getIndividualProjectCommands(commands);
-            return;
 
         } else {
-            switch(commands[1]) {
+            switch (commands[1]) {
                 case "all":
                     getAllProjects();
                     break;
@@ -104,7 +112,7 @@ public class InteractiveMode implements AppModeInterface {
                     createProject();
                     break;
                 case "search":
-                    if (commands.length != 4){
+                    if (commands.length != 4) {
                         System.out.println("Bad Search Parameters");
                     }
                     handleProjectSearch(commands);
@@ -114,7 +122,6 @@ public class InteractiveMode implements AppModeInterface {
                     break;
                 default:
                     System.out.println("Bad command");
-                    return;
             }
         }
 
@@ -128,7 +135,7 @@ public class InteractiveMode implements AppModeInterface {
             System.out.println("Bad Command.");
             return;
         }
-        switch(commands[2]) {
+        switch (commands[2]) {
             case "get":
                 getProjectById(id);
                 break;
@@ -150,7 +157,7 @@ public class InteractiveMode implements AppModeInterface {
 
 
     /********************************
-            ENTRY COMMANDS
+     ENTRY COMMANDS
      ********************************/
     private void getEntriesCommand(String[] commands) {
         // if the first flag contains a number...
@@ -165,7 +172,6 @@ public class InteractiveMode implements AppModeInterface {
             }
 
             getIndividualEntryCommands(commands);
-            return;
 
         } else {
             switch (commands[1]) {
@@ -179,7 +185,7 @@ public class InteractiveMode implements AppModeInterface {
                     createEntry(context);
                     break;
                 case "search":
-                    if (commands.length != 4){
+                    if (commands.length != 4) {
                         System.out.println("Bad Search Parameters");
                         break;
                     }
@@ -187,7 +193,6 @@ public class InteractiveMode implements AppModeInterface {
                     break;
                 default:
                     System.out.println("Bad Command.");
-                    return;
             }
         }
     }
@@ -201,7 +206,7 @@ public class InteractiveMode implements AppModeInterface {
             return;
         }
 
-        switch(commands[2]) {
+        switch (commands[2]) {
             case "get":
                 getEntryById(id);
                 break;
@@ -216,7 +221,7 @@ public class InteractiveMode implements AppModeInterface {
 
 
     /********************************
-        PROPER USAGE FUNCTIONS
+     PROPER USAGE FUNCTIONS
      ********************************/
     private void printProjectProperUsage() {
         System.out.println("Learn to use a command, nerd.");
@@ -276,7 +281,7 @@ public class InteractiveMode implements AppModeInterface {
 
 
     /********************************
-        PROJECTS - SEARCH FUNCTIONS
+     PROJECTS - SEARCH FUNCTIONS
      ********************************/
     private void handleProjectSearch(String[] commands) {
 
@@ -305,7 +310,7 @@ public class InteractiveMode implements AppModeInterface {
 
 
     /********************************
-        PROJECTS - DELETE FUNCTION
+     PROJECTS - DELETE FUNCTION
      ********************************/
     private void deleteProjectById(long id) {
         if (projectDao.deleteProjectById(id)) {
@@ -313,8 +318,6 @@ public class InteractiveMode implements AppModeInterface {
         } else {
             ui.failure();
         }
-
-        ui.pause();
     }
 
 
@@ -354,41 +357,21 @@ public class InteractiveMode implements AppModeInterface {
 
         // Iterate and store all files
         ArrayList<File> fileList = new ArrayList<>();
-        getAllFiles(flareFolder.parentDirectoryAsFile(), fileList);
 
-        // Construct and store all Project File objects
-        ArrayList<ProjectFile> projectFileList = new ArrayList<>();
-        for (File file : fileList) {
-            ProjectFile pf = new ProjectFile();
-            pf.fileName = file.getName();
-            pf.parentProjectId = newProject.id;
-            pf.parentEntryId = initialEntry.id;
+        ProjectFileIterator iter = new ProjectFileIterator();
+        iter.getAllFiles(flareFolder.parentDirectoryAsFile(), fileList);
+        ArrayList<ProjectFile> pfList = iter.constructProjectFilesFromFiles(fileList, newProject.id, initialEntry.id);
+        iter.filterProjectFiles(pfList);
 
-            // Manipulate the file name to get file type
-            String extension = "";
-            int i = file.getAbsolutePath().lastIndexOf('.');
-            if (i > 0) {
-                extension = file.getAbsolutePath().substring(i+1);
-                pf.fileType = extension;
-            } else {
-                pf.fileType = null;
-            }
-
-            // Attempt to find the hash value
-            try {
-                pf.hash = (new Hasher(file).getSha1Digest());
-            } catch (Exception e) {
-                pf.hash = null;
-            }
-
-            projectFileList.add(pf);
+        for (ProjectFile pf : pfList){
             projectFileDao.createProjectFile(pf);
         }
+
         // Store directory information in .flare folder
         XmlWriter writer = new XmlWriter();
         try {
-            writer.CreateNew(newProject, projectFileList, flareFolder.path().toString());
-        } catch (Exception e){
+            writer.CreateNew(newProject, pfList, flareFolder.path().toString());
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
 
@@ -399,7 +382,7 @@ public class InteractiveMode implements AppModeInterface {
 
 
     /********************************
-        ENTRIES - GET FUNCTIONS
+     ENTRIES - GET FUNCTIONS
      ********************************/
     private void getRecentEntries() {
         ui.printEntryList(entryDao.getRecentEntries());
@@ -415,19 +398,20 @@ public class InteractiveMode implements AppModeInterface {
 
 
     /********************************
-        ENTRIES - CREATE FUNCTION
+     ENTRIES - CREATE FUNCTION
      ********************************/
-    private void createEntry(Connection context){
+    private void createEntry(Connection context) {
         String projectTitle = ui.prompt("Enter Project Title:");
         boolean projectFound = false;
+        Project project = new Project();
         long projectId = 0;
         String projectFilePath = "";
         try {
             String sql = """
-                SELECT *
-                FROM projects
-                WHERE LOWER(title) = LOWER(?)
-                """;
+                    SELECT *
+                    FROM projects
+                    WHERE LOWER(title) = LOWER(?)
+                    """;
             PreparedStatement pstmt = context.prepareStatement(sql);
             pstmt.setString(1, projectTitle);
             ResultSet rs = pstmt.executeQuery();
@@ -443,6 +427,9 @@ public class InteractiveMode implements AppModeInterface {
                             projectFound = true;
                             correctUserInputReceived = true;
                             projectFilePath = rs.getString("local_file_dir");
+                            project.title = rs.getString("title");
+                            project.id = rs.getLong("id");
+                            project.language = rs.getString("language");
                             break;
                         case "n":
                             correctUserInputReceived = true;
@@ -477,21 +464,104 @@ public class InteractiveMode implements AppModeInterface {
                 projectId
         );
 
-        // Insert new entry
-        if (entryDao.createEntry(newEntry)) {
-            ui.success();
-        } else {
+        // Insert new entry (which returns the pk)
+        newEntry.id = entryDao.createEntryAndReturnGeneratedKey(newEntry);
+
+        if (newEntry.id == 0) {
             ui.failure();
         }
 
-        ui.pause();
+        // Step 1 - Load all files and hashes into memory from XML
 
-        // TODO: GET MODIFIED FILES
-        // TODO: UPDATE HASHES IN FLARE FOLDER
+        ArrayList<ProjectFile> lastUpdatedProjectFileList;
+        XmlReader reader = new XmlReader(projectFilePath);
+        try {
+            lastUpdatedProjectFileList = reader.getProjectFilesFromXml();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.out.println("No project files added to this entry, but the entry was still added.");
+            ui.failure();
+            return;
+        }
 
-        File projectDir = new File(projectFilePath);
-        //projectDir.listFiles();
+        // Step 2 - load all current files into memory from directory
+        ArrayList<File> fileList = new ArrayList<>();
+        ProjectFileIterator iter = new ProjectFileIterator();
+        iter.getAllFiles(new File(projectFilePath), fileList);
 
+        ArrayList<ProjectFile> currentProjectFileList = iter.constructProjectFilesFromFiles(fileList, projectId, newEntry.id);
+        iter.filterProjectFiles(currentProjectFileList);
+
+        ArrayList<ProjectFile> newXmlFileList = new ArrayList<>();
+        ArrayList<ProjectFile> projectFilesToAttachToEntry = new ArrayList<>();
+        // Step 4 -- Compare both lists
+        // We will output the new Project file if there is a match or the old project file is there is none
+        // We will also keep another copy of new project files so that they can be appended to the entry
+        for (ProjectFile currentPf : currentProjectFileList) {
+            boolean name_match = false;
+            boolean hash_match = false;
+            boolean file_type_match = false;
+
+            for (ProjectFile oldPf : lastUpdatedProjectFileList) {
+
+                if (currentPf.fileName.equals(oldPf.fileName)) {
+
+                    name_match = true;
+
+                    if (currentPf.fileType.equals(oldPf.fileType)) {
+
+                        file_type_match = true;
+
+                        if (currentPf.hash.equals(oldPf.hash)) {
+                            // If we get to this point, a match has been found of a file
+                            // that has not been updated. Break out of the loop.
+                            hash_match = true;
+
+                        }
+
+                        break;
+                    }
+                }
+            }
+            // Both the name and the hash match, the file has not been updated
+            if (name_match && hash_match && file_type_match) {
+                newXmlFileList.add(currentPf);
+            }
+
+            // If we find a matching name and file type, but not hash, the file has been updated
+            else if (name_match && file_type_match && !hash_match) {
+                newXmlFileList.add(currentPf);
+                projectFilesToAttachToEntry.add(currentPf);
+            }
+
+            // If the name is never matched, we can assume its a new file and needs
+            // to be catalogued
+            else if (!name_match) {
+                newXmlFileList.add(currentPf);
+                projectFilesToAttachToEntry.add(currentPf);
+            }
+
+            // Catch any project file that has fallen through, but
+            // this should not happen.
+            else {
+                newXmlFileList.add(currentPf);
+            }
+
+        }
+
+        for (ProjectFile file : projectFilesToAttachToEntry) {
+            projectFileDao.createProjectFile(file);
+        }
+
+        XmlWriter writer = new XmlWriter();
+        try {
+            writer.CreateNew(project, newXmlFileList, projectFilePath + "\\.flare");
+        } catch (Exception e) {
+            System.out.println(".flare local XML datastore not updated. Please try again with 'flare update-local'");
+            System.out.println("Your changed project files were still appended to the entry.");
+        }
+
+        ui.successWithMessage("Entry Added");
     }
 
 
@@ -563,16 +633,20 @@ public class InteractiveMode implements AppModeInterface {
         ui.printEntryList(entryDao.searchByProjectLanguage(searchTerm));
     }
 
-    private void searchEntriesByProjectFileName(String searchTerm) {}
+    private void searchEntriesByProjectFileName(String searchTerm) {
+    }
 
 
     private void getAllFiles(File directory, ArrayList<File> filesContainer) {
         if (directory.getName().equals(".git")) {
             return;
         }
+        if (directory.getName().equals(".flare")) {
+            return;
+        }
         File[] files = directory.listFiles();
         if (files != null) {
-            for(File file : files) {
+            for (File file : files) {
                 if (file.isDirectory()) {
                     getAllFiles(file, filesContainer);
                     continue;
