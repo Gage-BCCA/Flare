@@ -11,7 +11,7 @@ public class Entry {
     public long parentProjectId;
     public String parentProjectName;
     public String createdAt;
-    public ArrayList<String> modifiedFiles;
+    public ArrayList<ProjectFile> modifiedFiles;
 
     // A few overloaded constructors to allow my code to
     // actually execute for now (I suck at this).
@@ -19,6 +19,7 @@ public class Entry {
                  int duration) {
         this.notes = notes;
         this.duration = duration;
+        this.modifiedFiles = new ArrayList<ProjectFile>();
     }
 
     public Entry(String notes,
@@ -27,7 +28,10 @@ public class Entry {
         this.notes = notes;
         this.duration = duration;
         this.parentProjectId = parentProjectId;
+        this.modifiedFiles = new ArrayList<ProjectFile>();
     }
 
-    public Entry() {} // Empty Constructor for testing and bootstrapping new methods easily
+    public Entry() {
+        this.modifiedFiles = new ArrayList<ProjectFile>();
+    } // Empty Constructor for testing and bootstrapping new methods easily
 }

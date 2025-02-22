@@ -86,20 +86,4 @@ public class InitializerMode implements AppModeInterface{
         System.out.println("Flare Initialized.");
 
     }
-
-    private void getAllFiles(File directory, ArrayList<File> filesContainer) {
-        if (directory.getName().equals(".git")) {
-            return;
-        }
-        File[] files = directory.listFiles();
-        if (files != null) {
-            for(File file : files) {
-                if (file.isDirectory()) {
-                    getAllFiles(file, filesContainer);
-                    continue;
-                }
-                filesContainer.add(file);
-            }
-        }
-    }
 }

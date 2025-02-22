@@ -78,11 +78,6 @@ public class FlareFilter {
         allowedFileTypes.add("log");     // Log file
         allowedFileTypes.add("trace");   // Trace file
 
-        // Version Control Files
-        allowedFileTypes.add("gitignore");  // Git ignore file
-        allowedFileTypes.add("gitattributes"); // Git attributes file
-        allowedFileTypes.add("gitmodules");  // Git submodule file
-        allowedFileTypes.add("svn");      // Subversion file
 
     }
 }

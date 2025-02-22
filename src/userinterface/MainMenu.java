@@ -16,7 +16,7 @@ public class MainMenu {
             |  |     |  `----./  _____  \\  |  |\\  \\----.|  |____ |  '--'  ||  |_)  |\s
             |__|     |_______/__/     \\__\\ | _| `._____||_______||_______/ |______/ \s
                                                                                     \s
-            Track your time spent coding.
+            It's like git, but _way_ worse.
             """;
 
     public MainMenu(Scanner input) {
@@ -27,29 +27,4 @@ public class MainMenu {
         System.out.println(logo);
     }
 
-    public void printMainMenu() {
-        System.out.println("============================================");
-        System.out.println("|               MAIN MENU                   |");
-        System.out.println("| 1 - Show Most Recent Entries              |");
-        System.out.println("| 2 - Show All Project Urls                 |");
-        System.out.println("| 3 - Create an entry                       |");
-        System.out.println("| 4 - Create a Project                      |");
-        System.out.println("| 5 - Search for Projects By Language       |");
-        System.out.println("| 6 - Search for Entries By Project Title   |");
-        System.out.println("| 7 - Delete an Entry by ID                 |");
-        System.out.println("| 8 - Delete a Project by ID                |");
-        System.out.println("| 0 - Exit Program                          |");
-        System.out.println("============================================");
-        System.out.print("> ");
-    }
-
-    public void printEntries(ArrayList<Entry> entries) {
-        for (Entry entry : entries) {
-            //System.out.println(entry.language + " ---- " + entry.notes);
-        }
-    }
-
-    public void printMostRecentEntry(Entry entry) {
-        //System.out.println(entry.language + " ---- " + entry.notes);
-    }
 }

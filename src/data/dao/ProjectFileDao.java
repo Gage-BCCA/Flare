@@ -1,12 +1,10 @@
 package data.dao;
 
-import data.DaoInterface;
 import data.models.ProjectFile;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
 
 public class ProjectFileDao {
 

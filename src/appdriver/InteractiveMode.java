@@ -6,7 +6,6 @@ import data.dao.ProjectFileDao;
 import data.models.Entry;
 import data.models.Project;
 import data.models.ProjectFile;
-import runtime.crypto.Hasher;
 import runtime.util.FlareFolder;
 import runtime.util.ProjectFileIterator;
 import runtime.xml.XmlReader;
@@ -53,6 +52,12 @@ public class InteractiveMode implements AppModeInterface {
         while (programActive) {
             String rawUserInput = ui.emptyPrompt();
             String[] commands;
+
+            if (rawUserInput.equals(".exit")) {
+                programActive = false;
+                continue;
+            }
+
             try {
                 commands = rawUserInput.split(" ");
             } catch (Exception e) {
@@ -64,14 +69,11 @@ public class InteractiveMode implements AppModeInterface {
                 continue;
             }
             switch (commands[0]) {
-                case ".project":
+                case ".projects":
                     getProjectCommand(commands);
                     break;
                 case ".entries":
                     getEntriesCommand(commands);
-                    break;
-                case ".exit":
-                    programActive = false;
                     break;
                 default:
                     System.out.println("Bad command.");
@@ -94,7 +96,6 @@ public class InteractiveMode implements AppModeInterface {
                 printProjectProperUsage();
                 return;
             }
-
             getIndividualProjectCommands(commands);
 
         } else {
@@ -120,11 +121,18 @@ public class InteractiveMode implements AppModeInterface {
                 case "urls":
                     getAllProjectUrls();
                     break;
+                case "help":
+                    System.out.println("all - Gets all projects. Displays a table");
+                    System.out.println("recent - Gets most recent project");
+                    System.out.println("oldest - Gets oldest project");
+                    System.out.println("create - Creates a new project");
+                    System.out.println("urls - Display all project urls");
+                    System.out.println("[id] help - Display individual project commands");
+                    break;
                 default:
                     System.out.println("Bad command");
             }
         }
-
     }
 
     private void getIndividualProjectCommands(String[] commands) {
@@ -136,8 +144,14 @@ public class InteractiveMode implements AppModeInterface {
             return;
         }
         switch (commands[2]) {
-            case "get":
+            case "project.details":
                 getProjectById(id);
+                break;
+            case "project.url":
+                getProjectUrl(id);
+                break;
+            case "project.time":
+                getTotalTime(id);
                 break;
             case "update":
                 updateProject(id);
@@ -145,13 +159,22 @@ public class InteractiveMode implements AppModeInterface {
             case "delete":
                 deleteProjectById(id);
                 break;
-            case "entries":
-                // get all entries
+            case "entries.all":
+                getEntriesByProjectId(id);
                 break;
-            case "url":
-                getProjectUrl(id);
+            case "entries.count":
+                getNumberOfEntries(id);
                 break;
-
+            case "help":
+                System.out.println("project.details - Gets project details");
+                System.out.println("project.url - Gets project URL");
+                System.out.println("project.time - Gets total time entered on project");
+                System.out.println("update - Updates project");
+                System.out.println("delete - Deletes project");
+                System.out.println("entries.all - Gets all entries related to project");
+                System.out.println("entries.count - Gets a count of entries");
+                System.out.println("help - Prints this menu");
+                break;
         }
     }
 
@@ -236,7 +259,7 @@ public class InteractiveMode implements AppModeInterface {
      PROJECTS -- GET FUNCTIONS
      ********************************/
     private void getAllProjects() {
-        ui.printProjectList(projectDao.getAllProjects());
+        ui.printProjectList(projectDao.getAllProjects(), "All Projects");
     }
 
     private void getAllProjectUrls() {
@@ -260,6 +283,13 @@ public class InteractiveMode implements AppModeInterface {
         ui.printProjectList(projectDao.getOldestProject());
     }
 
+    private void getTotalTime(long id) {
+        System.out.printf("%s%n", projectDao.getTotalTimeByProjectId(id));
+    }
+
+    private void getNumberOfEntries(long id) {
+        System.out.printf("%s%n", projectDao.getNumberOfEntriesByProjectId(id));
+    }
 
     /********************************
      PROJECTS - UPDATE FUNCTION
@@ -304,7 +334,7 @@ public class InteractiveMode implements AppModeInterface {
 
     private void searchProjectByTitle(String searchTerm) {
         ArrayList<Project> projects = projectDao.searchByTitle(searchTerm);
-        ui.printProjectList(projects);
+        ui.printProjectList(projects, "Search Results For: " + searchTerm);
         ui.pause();
     }
 
@@ -324,7 +354,7 @@ public class InteractiveMode implements AppModeInterface {
     /********************************
      PROJECTS - CREATE FUNCTION
      ********************************/
-    public void createProject() {
+    private void createProject() {
         Project newProject = new Project();
         newProject.localFileDir = ui.prompt("Enter full file path to root directory (C:\\\\projects\\\\myproject): ");
         newProject.title = ui.prompt("Enter project title: ");
@@ -340,10 +370,9 @@ public class InteractiveMode implements AppModeInterface {
         );
         initialEntry.id = entryDao.createEntryAndReturnGeneratedKey(initialEntry);
 
-        // TODO: DO ALL THE INITIALIZER STUFF
         File dir = new File(newProject.localFileDir);
         if (!dir.exists()) {
-            ui.failure();
+            ui.failureWithMessage("Directory not found.");
             return;
         }
 
@@ -386,14 +415,22 @@ public class InteractiveMode implements AppModeInterface {
      ********************************/
     private void getRecentEntries() {
         ui.printEntryList(entryDao.getRecentEntries());
+        ui.pause();
     }
 
     private void getOlderEntries() {
         ui.printEntryList(entryDao.getOlderEntries());
+        ui.pause();
     }
 
     private void getEntryById(long id) {
         ui.printEntryList(entryDao.getEntryById(id));
+        ui.pause();
+    }
+
+    private void getEntriesByProjectId(long id) {
+        ui.printEntryListWithDetails(entryDao.getEntriesByProjectId(id));
+        ui.pause();
     }
 
 
@@ -606,7 +643,7 @@ public class InteractiveMode implements AppModeInterface {
         String searchParameter = commands[2].toLowerCase();
         String searchTerm = commands[3];
         switch (searchParameter) {
-            case "note":
+            case "entry.note":
                 searchEntriesByNote(searchTerm);
                 break;
             case "project.title":
@@ -615,44 +652,24 @@ public class InteractiveMode implements AppModeInterface {
             case "project.language":
                 searchEntriesByProjectLanguage(searchTerm);
                 break;
-            case "projectfile.filename":
-                searchEntriesByProjectFileName(searchTerm);
-                break;
+            default:
+                System.out.println("Bad Search Parameters");
+                return;
         }
     }
 
     private void searchEntriesByNote(String searchTerm) {
         ui.printEntryList(entryDao.searchByNote(searchTerm));
+        ui.pause();
     }
 
     private void searchEntriesByProjectTitle(String searchTerm) {
-        ui.printEntryList(entryDao.searchByProjectTitle(searchTerm));
+        ui.printEntryListWithDetails(entryDao.searchByProjectTitle(searchTerm));
+        ui.pause();
     }
 
     private void searchEntriesByProjectLanguage(String searchTerm) {
         ui.printEntryList(entryDao.searchByProjectLanguage(searchTerm));
-    }
-
-    private void searchEntriesByProjectFileName(String searchTerm) {
-    }
-
-
-    private void getAllFiles(File directory, ArrayList<File> filesContainer) {
-        if (directory.getName().equals(".git")) {
-            return;
-        }
-        if (directory.getName().equals(".flare")) {
-            return;
-        }
-        File[] files = directory.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    getAllFiles(file, filesContainer);
-                    continue;
-                }
-                filesContainer.add(file);
-            }
-        }
+        ui.pause();
     }
 }

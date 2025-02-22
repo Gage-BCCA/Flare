@@ -1,6 +1,5 @@
 package data.dao;
 
-import data.DaoInterface;
 import data.models.Project;
 
 import java.sql.*;
@@ -75,6 +74,48 @@ public class ProjectDao {
         } catch (SQLException e) {
             return new ArrayList<Project>();
         }
+    }
+
+    public long getTotalTimeByProjectId(long id) {
+        try {
+            String sql = """
+                    SELECT SUM(entries.duration)
+                    
+                    FROM projects
+                    INNER JOIN entries ON entries.parent_project_id = projects.id
+                    WHERE projects.id = ?
+                    """;
+
+            PreparedStatement selectPstmt = connection.prepareStatement(sql);
+            selectPstmt.setLong(1, id);
+            ResultSet rs1 = selectPstmt.executeQuery();
+            rs1.next();
+            return rs1.getLong("sum");
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return -1;
+        }
+    }
+
+    public long getNumberOfEntriesByProjectId(long id) {
+        try {
+            String sql = """
+                    SELECT COUNT(entries.notes)
+                    
+                    FROM projects
+                    INNER JOIN entries ON entries.parent_project_id = projects.id
+                    WHERE projects.id = ?
+                    """;
+
+        PreparedStatement selectPstmt = connection.prepareStatement(sql);
+        selectPstmt.setLong(1, id);
+        ResultSet rs1 = selectPstmt.executeQuery();
+        rs1.next();
+        return rs1.getLong("count");
+    } catch (Exception e) {
+        System.out.println(e.getMessage());
+        return -1;
+    }
     }
 
     public boolean createProject(Project newProject) {

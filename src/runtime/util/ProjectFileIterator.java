@@ -14,7 +14,6 @@ public class ProjectFileIterator {
         filter = new FlareFilter();
     }
 
-
     public void getAllFiles(File directory, ArrayList<File> filesContainer) {
         if (directory.getName().equals(".git")) {
             return;
@@ -59,7 +58,6 @@ public class ProjectFileIterator {
             try {
                 pf.hash = (new Hasher(file).getSha1Digest());
             } catch (Exception e) {
-                System.out.println(e.getMessage());
                 pf.hash = null;
             }
             pfList.add(pf);
